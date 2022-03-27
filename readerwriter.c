@@ -37,6 +37,7 @@ void rwlock_acquire_writelock(rwlock_t *lock) {
 
 void rwlock_release_writelock(rwlock_t *lock) {
     sem_post(&lock->writelock);
-    sem_wait(&lock->writer_waiting);
+    sem_post(&lock->writer_waiting);
+    
 }
 

@@ -9,12 +9,12 @@
 int read_loops;
 int write_loops;
 volatile int counter = 0;
-
+struct _rwlock_t *lock;
 rwlock_t mutex;
 
 int main(){
     //variables
-    struct _rwlock_t *lock = malloc(sizeof(struct _rwlock_t));
+    lock = malloc(sizeof(struct _rwlock_t));
     char rw;
     FILE *file;
     int error;
@@ -24,6 +24,7 @@ int main(){
 
     //initialize lock
     rwlock_init(lock);
+    rwlock_init(&mutex);
 
     //for threads
     pthread_t thread;
@@ -71,25 +72,25 @@ int main(){
 }
 
 void *reader(void *arg) {
-    rwlock_acquire_readlock(&mutex);
+    rwlock_acquire_readlock(lock);
 
     printf("Reader's is in... reading\n");
     int reader_num = counter;
     printf("Finished Reading: %d\n\n", reader_num);
 
-    rwlock_release_readlock(&mutex);
+    rwlock_release_readlock(lock);
     
     return NULL;
 }
 
 void *writer(void *arg) {
-    rwlock_acquire_writelock(&mutex);
+    rwlock_acquire_writelock(lock);
 
     printf("Writer in... writing: counter from %d to %d\n", counter, counter + 1);
     counter++;
     printf("Finished Writing\n\n");
 
-    rwlock_release_writelock(&mutex);
+    rwlock_release_writelock(lock);
     
     return NULL;
 }
