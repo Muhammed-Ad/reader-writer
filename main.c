@@ -8,12 +8,12 @@
 
 int read_loops;
 int write_loops;
-volatile int counter = 0;
+volatile int counter;
 struct _rwlock_t *lock;
-rwlock_t mutex;
 
 int main(){
     //variables
+    counter = 0;
     lock = malloc(sizeof(struct _rwlock_t));
     char rw;
     FILE *file;
@@ -24,11 +24,10 @@ int main(){
 
     //initialize lock
     rwlock_init(lock);
-    rwlock_init(&mutex);
 
     //for threads
     pthread_t thread;
-
+    int thread_count = 0;
     if (file){
         //scan input file
         
@@ -36,7 +35,8 @@ int main(){
             if (rw == 'r'){
                 //if read create a thread to run the readThread
                 printf("Create reader.\n");
-                error = pthread_create(&thread, NULL, (void *)reader, (void *)&lock);
+                thread_count++;
+                error = pthread_create(&thread, NULL, (void *)readThread, (void *)&lock);
                 if (error != 0){
                     printf("Can't create thread.\n");
                     return 1;
@@ -46,19 +46,23 @@ int main(){
             else if (rw == 'w'){
                 //if write create a thread to run the writeThread
                 printf("Create writer.\n");
-                error = pthread_create(&thread, NULL, (void *)writer, (void *)&lock);
+                thread_count++;
+                error = pthread_create(&thread, NULL, (void *)writeThread, (void *)&lock);
                 if (error != 0){
                     printf("Can't create thread.\n");
                     return 1;
                 }
             }
 
-            else if (rw == '\n'){
-                pthread_join(thread, NULL);
-                counter = 0;
-                printf("\n\n\nNEW SCENARIO: \n\n\n\n");
-                printf("Scenario Starts:\n");
-            }
+            // else if (rw == '\n'){
+            //     while(thread_count > 0){
+            //         pthread_join(thread, NULL);
+            //         thread_count--;
+            //     }
+            //     counter = 0;
+            //     printf("\n\n\nNEW SCENARIO: \n\n\n\n");
+            //     printf("Scenario Starts:\n");
+            // }
         }
     }
 
@@ -71,26 +75,40 @@ int main(){
     return 0;
 }
 
-void *reader(void *arg) {
+void* readThread(void *arg) {
     rwlock_acquire_readlock(lock);
 
     printf("Reader's is in... reading\n");
     int reader_num = counter;
-    printf("Finished Reading: %d\n\n", reader_num);
+    timewaster();
+    printf("Finished Reading: %d\n", reader_num);
 
     rwlock_release_readlock(lock);
     
     return NULL;
 }
 
-void *writer(void *arg) {
+void* writeThread(void *arg) {
     rwlock_acquire_writelock(lock);
 
-    printf("Writer in... writing: counter from %d to %d\n", counter, counter + 1);
+    printf("Writer's in... writing\n");
     counter++;
-    printf("Finished Writing\n\n");
+    timewaster();
+    printf("Finished Writing: from %d to %d\n", counter - 1, counter);
 
     rwlock_release_writelock(lock);
     
     return NULL;
+}
+
+void timewaster(){
+    int T = rand() % 10000;  
+
+    for(int i = 0; i < T; i++)  
+        for(int j = 0; j < T; j++){
+            int x = i * j;
+            x *= x;
+        }   
+           
+
 }
